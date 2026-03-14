@@ -1,36 +1,30 @@
-# syntax=docker/dockerfile:1
+# 1. Define Global Arguments (Scope: All Stages)
+ARG BUILDER_IMAGE=python:3.9-slim
+ARG RUNTIME_IMAGE=python:3.9-alpine
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/engine/reference/builder/
+# 2. Build Stage
+FROM ${BUILDER_IMAGE} AS builder
+WORKDIR /build
 
-ARG NODE_VERSION=21.6.2
+# In this stage, we might install heavy build tools
+RUN apt-get update && apt-get install -y gcc g++
+COPY requirements.txt .
+RUN pip install --user -r requirements.txt
 
-FROM node:${NODE_VERSION}-alpine
+# 3. Final Runtime Stage
+FROM ${RUNTIME_IMAGE}
+WORKDIR /app
 
-# Use production node environment by default.
-ENV NODE_ENV production
+# Note: Global ARGs must be re-declared inside a stage 
+# if you want to use them in a RUN or ENV command.
+ARG RUNTIME_IMAGE
+ENV IMAGE_VERSION=${RUNTIME_IMAGE}
 
-
-WORKDIR /usr/src/app
-
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.npm to speed up subsequent builds.
-# Leverage a bind mounts to package.json and package-lock.json to avoid having to copy them into
-# into this layer.
-RUN --mount=type=bind,source=package.json,target=package.json \
-    --mount=type=bind,source=package-lock.json,target=package-lock.json \
-    --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
-
-# Run the application as a non-root user.
-USER node
-
-# Copy the rest of the source files into the image.
+# Copy from builder stage
+COPY --from=builder /root/.local /root/.local
 COPY . .
 
-# Expose the port that the application listens on.
-EXPOSE 8080
+# Ensure the scripts are in the PATH
+ENV PATH=/root/.local/bin:$PATH
 
-# Run the application.
-CMD node app.js
+ENTRYPOINT ["python", "main.py"]
