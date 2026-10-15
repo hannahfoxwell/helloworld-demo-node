@@ -1,6 +1,6 @@
 # 1. Define Global Arguments (Scope: All Stages)
 ARG BUILDER_IMAGE=python:3.11-slim
-ARG RUNTIME_IMAGE=python:3.10-alpine
+ARG RUNTIME_IMAGE=docker.io/library/python:3.15-alpine@sha256:ff4d3c9b1a48f646eedd93182aaea385c7a5452f4c8a8cd7cef686babacf4928
 
 # 2. Build Stage
 FROM ${BUILDER_IMAGE} AS builder
