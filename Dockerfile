@@ -1,6 +1,6 @@
 # 1. Define Global Arguments (Scope: All Stages)
 ARG BUILDER_IMAGE=python:3.11-slim
-ARG RUNTIME_IMAGE=python:3.10-alpine
+ARG RUNTIME_IMAGE=dhi.io/python:3-alpine-sfw-ent-dev
 
 # 2. Build Stage
 FROM ${BUILDER_IMAGE} AS builder
